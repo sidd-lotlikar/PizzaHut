@@ -10,4 +10,8 @@ While searching on the web, I came by a paper written by Justin Sheehy and David
 
 Here is the paper: https://riak.com/assets/bitcask-intro.pdf?
 
-I will be starting with this and see what I can do.
+I will see what I can do with this.
+
+## First Step - In Memory Key-Value Store
+
+Just to get started we will be making the most boring, generic key-value store that anyone can make.
