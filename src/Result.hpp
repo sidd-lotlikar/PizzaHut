@@ -1,7 +1,7 @@
 #pragma once
 
 #include <variant>
-
+#include <utility>
 template<typename T, typename E>
 class Result {
 public:
@@ -9,27 +9,27 @@ public:
      * Constructs a happy result.
      */
     static Result Ok(T val) {
-        return Result(OkTag{}, val);
+        return Result(OkTag{}, std::move(val));
     }
 
     /**
      * Constructs an error result.
      */
     static Result Err(E err) {
-        return Result(ErrTag{}, err);
+        return Result(ErrTag{}, std::move(err));
     }
 
     /**
      * Checks to see if the result is holding the desired type.
      */
-    bool isOk() const {
+    bool IsOk() const {
         return mData.index() == 0;
     }
 
     /**
      * Checks to see if the result is holding an error. 
      */
-    bool isErr() const {
+    bool IsErr() const {
         return mData.index() == 1;
     }
 
@@ -52,8 +52,8 @@ private:
     struct OkTag {};
     struct ErrTag {};
 
-    Result(OkTag, T val) : mData(std::in_place_index<0>, val) {}
-    Result(ErrTag, E err) : mData(std::in_place_index<1>, err) {}
+    Result(OkTag, T&& val) : mData(std::in_place_index<0>, std::move(val)) {}
+    Result(ErrTag, E&& err) : mData(std::in_place_index<1>, std::move(err)) {}
 
     /**
      * This will contain EITHER the ok object, or the error object.
