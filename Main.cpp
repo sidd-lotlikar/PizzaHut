@@ -1,29 +1,39 @@
 #include "src/Result.hpp"
 
 #include <iostream>
+#include <memory>
 
-
-void assert(bool op) {
-    if (op)
-    {
+void assertTrue(bool op) {
+    if (op) {
         std::cout << "Operation succeeded!" << std::endl;
     }
-    else
-    {
+    else {
+        std::cout << "Operation Failed!" << std::endl;
+    }
+}
+
+void assertEqInt(int a, int b) {
+    if (a == b) {
+        std::cout << "Operation succeeded!" << std::endl;
+    }
+    else {
         std::cout << "Operation Failed!" << std::endl;
     }
 }
 
 int main() {
-    auto success = Result<std::string, std::string>::Ok("success");
+    auto success = Result<int, int>::Ok(1);
+    auto failure = Result<int, int>::Err(-1);
 
-    auto failure = Result<std::string, std::string>::Err("failed");
+    assertTrue(success.isOk());
+    assertTrue(!success.isErr());
 
-    assert(success.isOk());
-    assert(!success.isErr());
+    assertTrue(failure.isErr());
+    assertTrue(!failure.isOk());
 
-    assert(failure.isErr());
-    assert(!failure.isOk());
-    
+    assertEqInt(success.value(), 1);
+    assertEqInt(failure.error(), -1);
+
+    std::cout << "Finished testing value and error" << std::endl;
     return 0;
 }
