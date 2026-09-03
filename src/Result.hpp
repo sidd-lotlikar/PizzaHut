@@ -2,6 +2,11 @@
 
 #include <variant>
 #include <utility>
+
+/**
+ * T - the happy value we want to return.
+ * E - the error value we want to return if an error occurs.
+ */
 template<typename T, typename E>
 class Result {
 public:
