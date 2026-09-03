@@ -49,6 +49,17 @@ public:
         return std::get<1>(mData);
     }
 
+    /**
+     * Returns the stored reference (immutable) to the successful value
+     */
+    const T& value() const {
+        return std::get<0>(mData);
+    }
+    
+    const E& error() const {
+        return std::get<1>(mData);
+    }
+
 private:
     /**
      * Tags distinguish Ok construction from Err construction,
