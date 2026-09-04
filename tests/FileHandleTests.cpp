@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <chrono>
 #include <filesystem>
 #include <string>
@@ -67,6 +68,65 @@ TEST_F(FileHandleTest, OpenCreatesANewFileAndOpensAnExistingFile) {
 
     auto second = FileHandle::Open(path.c_str());
     EXPECT_TRUE(second.IsOk());
+}
+
+TEST_F(FileHandleTest, WriteThenReadReturnsTheSameBytes) {
+    const auto path = FilePath("read-write.txt");
+    auto opened = FileHandle::Open(path.c_str());
+    ASSERT_TRUE(opened.IsOk());
+
+    const std::array<std::byte, 5> writtenBytes{
+        static_cast<std::byte>('p'),
+        static_cast<std::byte>('i'),
+        static_cast<std::byte>('z'),
+        static_cast<std::byte>('z'),
+        static_cast<std::byte>('a'),
+    };
+
+    auto written = opened.value().Write(0, writtenBytes.data(), writtenBytes.size());
+    ASSERT_TRUE(written.IsOk());
+    EXPECT_EQ(written.value(), writtenBytes.size());
+
+    std::array<std::byte, writtenBytes.size()> readBytes{};
+    auto read = opened.value().Read(0, readBytes.data(), readBytes.size());
+    ASSERT_TRUE(read.IsOk());
+    EXPECT_EQ(read.value(), writtenBytes.size());
+    EXPECT_EQ(readBytes, writtenBytes);
+}
+
+TEST_F(FileHandleTest, ReadReturnsOnlyTheBytesAvailableBeforeEndOfFile) {
+    const auto path = FilePath("short-read.txt");
+    auto opened = FileHandle::Open(path.c_str());
+    ASSERT_TRUE(opened.IsOk());
+
+    const std::array<std::byte, 3> writtenBytes{
+        static_cast<std::byte>('p'),
+        static_cast<std::byte>('i'),
+        static_cast<std::byte>('e'),
+    };
+    ASSERT_TRUE(opened.value().Write(0, writtenBytes.data(), writtenBytes.size()).IsOk());
+
+    std::array<std::byte, 10> readBytes{};
+    auto read = opened.value().Read(0, readBytes.data(), readBytes.size());
+    ASSERT_TRUE(read.IsOk());
+    EXPECT_EQ(read.value(), writtenBytes.size());
+    EXPECT_EQ(readBytes[0], writtenBytes[0]);
+    EXPECT_EQ(readBytes[1], writtenBytes[1]);
+    EXPECT_EQ(readBytes[2], writtenBytes[2]);
+}
+
+TEST_F(FileHandleTest, ReadAndWriteRejectNullBuffersWithNonZeroLengths) {
+    const auto path = FilePath("invalid-buffer.txt");
+    auto opened = FileHandle::Open(path.c_str());
+    ASSERT_TRUE(opened.IsOk());
+
+    auto read = opened.value().Read(0, nullptr, 1);
+    EXPECT_TRUE(!read.IsOk());
+    EXPECT_EQ(read.error(), FileError::InvalidBuffer);
+
+    auto written = opened.value().Write(0, nullptr, 1);
+    EXPECT_TRUE(!written.IsOk());
+    EXPECT_EQ(written.error(), FileError::InvalidBuffer);
 }
 
 TEST_F(FileHandleTest, DestructorClosesItsDescriptor) {
