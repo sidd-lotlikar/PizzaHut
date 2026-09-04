@@ -14,6 +14,7 @@ enum class FileError {
 
 class FileHandle {
 public:
+    // Rule of 5
     ~FileHandle() noexcept;
 
     FileHandle (const FileHandle&) = delete;
@@ -22,6 +23,7 @@ public:
     FileHandle (FileHandle&& other) noexcept;
     FileHandle& operator=(FileHandle&& other) noexcept;
 
+    // FileHandle Factory Method
     static Result<FileHandle, FileError> Open(const char* path);
 
     Result<std::size_t, FileError> Read(std::uint64_t offset, std::byte* buffer, std::size_t length);
