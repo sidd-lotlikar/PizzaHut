@@ -26,8 +26,9 @@ public:
 
     Result<std::size_t, FileError> Read(std::uint64_t offset, std::byte* buffer, std::size_t length);
     Result<std::size_t, FileError> Write(std::uint64_t offset, const std::byte* buffer, std::size_t length);
+
+    bool Close() noexcept;
 private:
     explicit FileHandle(int fd);
-    bool Close() noexcept;
     int mDescriptor = -1;
 };
