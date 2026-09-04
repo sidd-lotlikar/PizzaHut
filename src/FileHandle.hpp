@@ -3,11 +3,13 @@
 #include "Result.hpp"
 
 #include <cstddef>
+#include <cstdint>
 
 enum class FileError {
     OpenError,
     ReadError,
     WriteError,
+    InvalidBuffer
 };
 
 class FileHandle {
@@ -22,8 +24,8 @@ public:
 
     static Result<FileHandle, FileError> Open(const char* path);
 
-    Result<std::size_t, FileError> Read(std::size_t offset, std::byte* buffer, std::size_t length);
-    Result<std::size_t, FileError> Write(std::size_t offset, std::byte* buffer, std::size_t length);
+    Result<std::size_t, FileError> Read(std::uint64_t offset, std::byte* buffer, std::size_t length);
+    Result<std::size_t, FileError> Write(std::uint64_t offset, const std::byte* buffer, std::size_t length);
 private:
     explicit FileHandle(int fd);
     bool Close() noexcept;
