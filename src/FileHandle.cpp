@@ -7,7 +7,7 @@ Result<FileHandle, FileError> FileHandle::Open(const char* path) {
     // Open the file
     // O_CREAT - Permission to open a new file
     // O_RDWR - Permission to read and write to the file
-    // 0644 - A 644 permission so the owner can read and write to the file
+    // 0644 - Open the file with 644 permission so the owner can read and write to the file
     int fd = ::open(path, O_CREAT | O_RDWR, 0644);
     if (fd == -1) {
         return Result<FileHandle, FileError>::Err(FileError::OpenError);
@@ -17,7 +17,10 @@ Result<FileHandle, FileError> FileHandle::Open(const char* path) {
 }
 
 Result<std::size_t, FileError> FileHandle::Read(std::uint64_t offset, std::byte* buffer, std::size_t length) {
-    if (length == 0) {
+    if (buffer == nullptr && length > 0) {
+        return Result<std::size_t, FileError>::Err(FileError::InvalidBuffer);
+    }
+    if (buffer == nullptr && length == 0) {
         return Result<std::size_t, FileError>::Ok(0);
     }
     // ssize_t is a Posix specifc type. 
@@ -30,11 +33,11 @@ Result<std::size_t, FileError> FileHandle::Read(std::uint64_t offset, std::byte*
 }
 
 Result<std::size_t, FileError> FileHandle::Write(std::uint64_t offset, const std::byte* buffer, std::size_t length) {
-    if (buffer == nullptr && length == 0) {
-        return Result<std::size_t, FileError>::Ok(0);
-    }
     if (buffer == nullptr && length > 0) {
         return Result<std::size_t, FileError>::Err(FileError::InvalidBuffer);
+    }
+    if (buffer == nullptr && length == 0) {
+        return Result<std::size_t, FileError>::Ok(0);
     }
 
     ssize_t bytesWrite = pwrite(mDescriptor, buffer, length, offset);
