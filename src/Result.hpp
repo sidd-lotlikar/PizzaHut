@@ -32,13 +32,6 @@ public:
     }
 
     /**
-     * Checks to see if the result is holding an error. 
-     */
-    bool IsErr() const {
-        return mData.index() == 1;
-    }
-
-    /**
      * Returns the stored reference to the successful value
      */
     T& value() {
