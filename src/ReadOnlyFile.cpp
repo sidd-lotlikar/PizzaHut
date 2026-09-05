@@ -2,10 +2,9 @@
 
 Result<ReadOnlyFile, FileError> ReadOnlyFile::Open(const char* path) {
     // Setup options
-    FileOpenOptions options {};
+    FileOpenOptions options;
     options.access = FileAccess::ReadOnly;
     options.creation = FileCreation::OpenExisting;
-    options.permissions = 0644;
     // Create a file handle
     auto openFile = FileHandle::Open(path, options);
     if (!openFile.IsOk()) {
@@ -16,9 +15,9 @@ Result<ReadOnlyFile, FileError> ReadOnlyFile::Open(const char* path) {
 }
 
 Result<std::size_t, FileError> ReadOnlyFile::Read(std::uint64_t offset, std::byte* buffer, size_t length) {
-    return mReadFile.Read(offset, buffer, length);
+    return mFile.Read(offset, buffer, length);
 }
 
-ReadOnlyFile::ReadOnlyFile(FileHandle&& file) : mReadFile(std::move(file)) {
+ReadOnlyFile::ReadOnlyFile(FileHandle&& file) : mFile(std::move(file)) {
     
 }
