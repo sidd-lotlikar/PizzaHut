@@ -59,20 +59,33 @@ private:
     std::filesystem::path testDirectory;
 };
 
+FileOpenOptions ReadWriteNewFileOptions() {
+    FileOpenOptions options;
+    options.access = FileAccess::ReadWrite;
+    options.creation = FileCreation::OpenNew;
+    return options;
+}
+
+FileOpenOptions ReadOnlyExistingFileOptions() {
+    FileOpenOptions options;
+    options.access = FileAccess::ReadOnly;
+    options.creation = FileCreation::OpenExisting;
+    return options;
+}
+
 TEST_F(FileHandleTest, OpenCreatesANewFileAndOpensAnExistingFile) {
     const auto path = FilePath("created.txt");
-
-    auto first = FileHandle::Open(path.c_str());
+    auto first = FileHandle::Open(path.c_str(), ReadWriteNewFileOptions());
     ASSERT_TRUE(first.IsOk());
     EXPECT_TRUE(std::filesystem::exists(path));
 
-    auto second = FileHandle::Open(path.c_str());
+    auto second = FileHandle::Open(path.c_str(), ReadOnlyExistingFileOptions());
     EXPECT_TRUE(second.IsOk());
 }
 
 TEST_F(FileHandleTest, WriteThenReadReturnsTheSameBytes) {
     const auto path = FilePath("read-write.txt");
-    auto opened = FileHandle::Open(path.c_str());
+    auto opened = FileHandle::Open(path.c_str(), ReadWriteNewFileOptions());
     ASSERT_TRUE(opened.IsOk());
 
     const std::array<std::byte, 5> writtenBytes{
@@ -96,7 +109,7 @@ TEST_F(FileHandleTest, WriteThenReadReturnsTheSameBytes) {
 
 TEST_F(FileHandleTest, ReadReturnsOnlyTheBytesAvailableBeforeEndOfFile) {
     const auto path = FilePath("short-read.txt");
-    auto opened = FileHandle::Open(path.c_str());
+    auto opened = FileHandle::Open(path.c_str(), ReadWriteNewFileOptions());
     ASSERT_TRUE(opened.IsOk());
 
     const std::array<std::byte, 3> writtenBytes{
@@ -117,7 +130,7 @@ TEST_F(FileHandleTest, ReadReturnsOnlyTheBytesAvailableBeforeEndOfFile) {
 
 TEST_F(FileHandleTest, ReadAndWriteRejectNullBuffersWithNonZeroLengths) {
     const auto path = FilePath("invalid-buffer.txt");
-    auto opened = FileHandle::Open(path.c_str());
+    auto opened = FileHandle::Open(path.c_str(), ReadWriteNewFileOptions());
     ASSERT_TRUE(opened.IsOk());
 
     auto read = opened.value().Read(0, nullptr, 1);
@@ -135,7 +148,7 @@ TEST_F(FileHandleTest, DestructorClosesItsDescriptor) {
 
     // Create local scope so the destructor is called at the end automatically
     {
-        auto result = FileHandle::Open(path.c_str());
+        auto result = FileHandle::Open(path.c_str(), ReadWriteNewFileOptions());
         ASSERT_TRUE(result.IsOk());
         EXPECT_EQ(OpenDescriptorCount(), descriptorsBefore + 1);
     }
@@ -148,7 +161,7 @@ TEST_F(FileHandleTest, MoveConstructorTransfersOwnership) {
     const auto descriptorsBefore = OpenDescriptorCount();
 
     {
-        auto result = FileHandle::Open(path.c_str());
+        auto result = FileHandle::Open(path.c_str(), ReadWriteNewFileOptions());
         ASSERT_TRUE(result.IsOk());
 
         FileHandle destination(std::move(result.value()));
@@ -164,8 +177,8 @@ TEST_F(FileHandleTest, MoveAssignmentClosesTheOldDescriptorAndTransfersOwnership
     const auto descriptorsBefore = OpenDescriptorCount();
 
     {
-        auto destinationResult = FileHandle::Open(destinationPath.c_str());
-        auto sourceResult = FileHandle::Open(sourcePath.c_str());
+        auto destinationResult = FileHandle::Open(destinationPath.c_str(), ReadWriteNewFileOptions());
+        auto sourceResult = FileHandle::Open(sourcePath.c_str(), ReadWriteNewFileOptions());
         ASSERT_TRUE(destinationResult.IsOk());
         ASSERT_TRUE(sourceResult.IsOk());
         ASSERT_EQ(OpenDescriptorCount(), descriptorsBefore + 2);
