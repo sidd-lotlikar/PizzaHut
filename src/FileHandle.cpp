@@ -3,12 +3,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-Result<FileHandle, FileError> FileHandle::Open(const char* path) {
-    // Open the file
-    // O_CREAT - Permission to open a new file
-    // O_RDWR - Permission to read and write to the file
-    // 0644 - Open the file with 644 permission so the owner can read and write to the file
-    int fd = ::open(path, O_CREAT | O_RDWR, 0644);
+Result<FileHandle, FileError> FileHandle::Open(const char* path, const FileOpenOptions& options) {
+    // Resolve flags and open the file
+    int fd;
+    int flags = options.access == FileAccess::ReadOnly ? O_RDONLY : O_RDWR;
+    if (options.creation == FileCreation::OpenNew) {
+        flags |= O_CREAT;
+        fd = ::open(path, flags, options.permissions);
+    } else {
+        fd = ::open(path, flags);
+    }
+    
     if (fd == -1) {
         return Result<FileHandle, FileError>::Err(FileError::OpenError);
     }
@@ -23,6 +28,7 @@ Result<std::size_t, FileError> FileHandle::Read(std::uint64_t offset, std::byte*
     if (buffer == nullptr && length == 0) {
         return Result<std::size_t, FileError>::Ok(0);
     }
+
     // ssize_t is a Posix specifc type. 
     ssize_t bytesRead = pread(mDescriptor, buffer, length, offset);
     
@@ -36,6 +42,7 @@ Result<std::size_t, FileError> FileHandle::Write(std::uint64_t offset, const std
     if (buffer == nullptr && length > 0) {
         return Result<std::size_t, FileError>::Err(FileError::InvalidBuffer);
     }
+
     if (buffer == nullptr && length == 0) {
         return Result<std::size_t, FileError>::Ok(0);
     }
@@ -53,7 +60,9 @@ bool FileHandle::Close() noexcept {
         mDescriptor = -1;
         return false;
     }
+
     mDescriptor = -1;
+    
     return true;
 }
 
@@ -71,8 +80,10 @@ FileHandle& FileHandle::operator=(FileHandle&& other) noexcept {
     if (this == &other) {
         return *this;
     }
+
     this->Close();
     this->mDescriptor = other.mDescriptor;
     other.mDescriptor = -1;
+    
     return *this;
 }
