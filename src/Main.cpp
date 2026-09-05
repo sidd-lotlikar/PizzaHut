@@ -1,5 +1,6 @@
 #include "Result.hpp"
 #include "FileHandle.hpp"
+#include "ReadOnlyFile.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -11,11 +12,15 @@ int main() {
     if (!std::filesystem::exists(directoryPath) && !std::filesystem::is_directory(directoryPath)) {
         std::filesystem::create_directory(directoryPath);
     }
+
     // Create file path and test open.
     const std::filesystem::path filePath = directoryPath / "a.txt";
+    FileOpenOptions options;
+    options.access = FileAccess::ReadWrite;
+    options.creation = FileCreation::OpenNew;
     
     // Create the file
-    auto opened = FileHandle::Open(filePath.c_str());
+    auto opened = FileHandle::Open(filePath.c_str(), options);
     if (!opened.IsOk()) {
         std::cerr << "opening the file failed\n";
     }
@@ -41,4 +46,22 @@ int main() {
 
     std::string result(reinterpret_cast<const char*>(buffer.data()), read.value());
     std::cout << "Read: " << result << "\n";
+
+
+    std::vector<std::byte> buffer2(message.size());
+    // Create ReadOnlyFile handle
+    auto readOnlyOpenedFile = ReadOnlyFile::Open(filePath.c_str());
+    if (!readOnlyOpenedFile.IsOk()) {
+        std::cerr << "Open Failed #2\n";
+    }
+
+    auto& readOnlyFile = readOnlyOpenedFile.value();
+    auto readOnlyResult = readOnlyFile.Read(0, buffer2.data(), buffer2.size());
+    if (!readOnlyResult.IsOk()) {
+        std::cerr << "ReadOnly Read Failed\n";
+    }
+
+    std::string readOnlyString(reinterpret_cast<const char*>(buffer2.data()), readOnlyResult.value());
+    std::cout << "ReadOnly: " << readOnlyString << "\n";
+
 }
