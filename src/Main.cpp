@@ -1,6 +1,7 @@
 #include "Result.hpp"
 #include "FileHandle.hpp"
 #include "ReadOnlyFile.hpp"
+#include "ReadAppendFile.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -47,9 +48,8 @@ int main() {
     std::string result(reinterpret_cast<const char*>(buffer.data()), read.value());
     std::cout << "Read: " << result << "\n";
 
-
-    std::vector<std::byte> buffer2(message.size());
     // Create ReadOnlyFile handle
+    std::vector<std::byte> buffer2(message.size());
     auto readOnlyOpenedFile = ReadOnlyFile::Open(filePath.c_str());
     if (!readOnlyOpenedFile.IsOk()) {
         std::cerr << "Open Failed #2\n";
@@ -64,4 +64,19 @@ int main() {
     std::string readOnlyString(reinterpret_cast<const char*>(buffer2.data()), readOnlyResult.value());
     std::cout << "ReadOnly: " << readOnlyString << "\n";
 
+    // Create ReadAppendFile handle
+    auto readAppendOpenedFile = ReadAppendFile::Open(filePath.c_str());
+    // Write a new message so we can
+    const std::string newMessage = "Pepperoni";
+    auto& readAppendFile = readAppendOpenedFile.value();
+    readAppendFile.Append(reinterpret_cast<const std::byte*>(newMessage.data()), newMessage.size());
+    // Read the new message
+    int offset = message.size();
+    std::vector<std::byte> newMessageReadBuffer(newMessage.size());
+    auto readAppendFileResult = readAppendFile.Read(offset, newMessageReadBuffer.data(), newMessageReadBuffer.size());
+    if (!readAppendFileResult.IsOk()) {
+        std::cerr << "ReadAppendFile: Could not read new message!\n";
+    }
+    std::string readAppendString(reinterpret_cast<const char*>(newMessageReadBuffer.data()), readAppendFileResult.value());
+    std::cout << "ReadAppendFile: " << readAppendString << "\n";
 }
