@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Result.hpp"
 #include "FileHandle.hpp"
 
