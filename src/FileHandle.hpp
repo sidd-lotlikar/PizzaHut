@@ -10,7 +10,8 @@ enum class FileError {
     OpenError,
     ReadError,
     WriteError,
-    InvalidBuffer
+    InvalidBuffer,
+    StatError
 };
 
 enum class FileAccess {
@@ -43,9 +44,14 @@ public:
     // FileHandle Factory Method
     static Result<FileHandle, FileError> Open(const char* path, const FileOpenOptions& options = {});
 
+    // Read/Write method
     Result<std::size_t, FileError> Read(std::uint64_t offset, std::byte* buffer, std::size_t length);
     Result<std::size_t, FileError> Write(std::uint64_t offset, const std::byte* buffer, std::size_t length);
 
+    // Size
+    Result<std::size_t, FileError> Size() const;
+
+    // Close
     bool Close() noexcept;
 private:
     explicit FileHandle(int fd);

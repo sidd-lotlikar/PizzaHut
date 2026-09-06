@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 Result<FileHandle, FileError> FileHandle::Open(const char* path, const FileOpenOptions& options) {
     // Resolve flags and open the file
@@ -53,6 +54,15 @@ Result<std::size_t, FileError> FileHandle::Write(std::uint64_t offset, const std
     }
     
     return Result<std::size_t, FileError>::Ok(bytesWrite);
+}
+
+Result<std::uint64_t, FileError> FileHandle::Size() const {
+    struct stat info {};
+    if (::fstat(mDescriptor, &info) == -1) {
+        return Result<std::uint64_t, FileError>::Err(FileError::StatError);
+    }
+
+    return Result<std::uint64_t, FileError>::Ok(static_cast<std::uint64_t>(info.st_size));
 }
 
 bool FileHandle::Close() noexcept {
